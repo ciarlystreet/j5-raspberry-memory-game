@@ -124,19 +124,23 @@ function removeAllBtnListner() {
 /**
  * Show mesage with the game guide
  */
-function showGuideMessage() {
-  printMessage(`***********`);
-  printMessage(
-    `HOW TO PLAY\nThe game consists of guessing a sequence of colors that varies with each match.\nAt each match you will be asked to select the difficulty level which consists of the sequence presentation duration variation (faster = more difficult).`,
-    "blueBright"
-  );
-  printMessage(
-    `\nNOTES: Each time the blue LED is on, the system will wait for your input`,
-    "cyan"
-  );
-  printMessage(`***********`);
+async function showGuideMessage() {
+  if (ifFirstMatch) {
+    printMessage(`***********`);
+    printMessage(
+      `HOW TO PLAY\nThe game consists of guessing a sequence of colors that varies with each match.\nAt each match you will be asked to select the difficulty level which consists of the sequence presentation duration variation (faster = more difficult).`,
+      "blueBright"
+    );
+    printMessage(
+      `\nNOTES: Each time the blue LED is on, the system will wait for your input`,
+      "cyan"
+    );
+    printMessage(`***********`);
 
-  ifFirstMatch = false;
+    await playStart();
+
+    ifFirstMatch = false;
+  }
 }
 
 /**
@@ -332,7 +336,60 @@ async function showResult() {
 }
 
 /**
- * Play success songs
+ * Play start song
+ */
+function playStart() {
+  return new Promise((resolve, reject) => {
+    const song = "C F C G -- C G A L F -- C F C G";
+    const tempo = 100;
+    const duration = Math.round(
+      ((song.replace(/\s/g, "").length * tempo) / 60) * 100
+    );
+
+    // Plays the same song with a string representation
+    piezo.play({
+      // DO = C  RE = D   MI = E   FA = F   SOL = G  LA = A SI = B
+      // song is composed by a string of notes
+      // a default beat is set, and the default octave is used
+      // any invalid note is read as "no note"
+      song,
+      beats: 1 / 4,
+      tempo
+    });
+
+    ledOrange.pulse({
+      easing: "linear",
+      duration: 3000,
+      cuePoints: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      keyFrames: [0, 10, 0, 50, 0, 255]
+    });
+
+    ledGreen.pulse({
+      easing: "linear",
+      duration: 3000,
+      cuePoints: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      keyFrames: [0, 10, 0, 50, 0, 255]
+    });
+
+    ledYellow.pulse({
+      easing: "linear",
+      duration: 3000,
+      cuePoints: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      keyFrames: [0, 10, 0, 50, 0, 255]
+    });
+
+    setTimeout(() => {
+      ledOrange.stop();
+      ledGreen.stop();
+      ledYellow.stop();
+      ledsToggle();
+      resolve();
+    }, duration);
+  });
+}
+
+/**
+ * Play success song
  */
 function playSuccess() {
   return new Promise((resolve, reject) => {
@@ -390,7 +447,7 @@ function playSuccess() {
 }
 
 /**
- * Play error songs
+ * Play error song
  */
 async function playError() {
   return new Promise((resolve, reject) => {
@@ -425,7 +482,7 @@ async function playError() {
 async function startGame() {
   resetVars();
 
-  if (ifFirstMatch) showGuideMessage();
+  await showGuideMessage();
   await setGameSpeed();
   await userIsReady();
   await makeSequence();
