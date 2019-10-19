@@ -1,6 +1,6 @@
 # J5 Raspberry Memory Game
 
-A simple memory game made with Raspberry and written in JavaScript using Johnny-Five.
+A simple game to test your memory skills. You will be required to remember and reproduce a sequence of colors that varies with each match. You can also manage the difficulty level by selecting the speed in which the sequence is shown.
 
 ## Build the electronic circuit
 
