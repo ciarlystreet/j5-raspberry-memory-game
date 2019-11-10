@@ -28,11 +28,12 @@
 
 const five = require("johnny-five");
 const { RaspiIO } = require("raspi-io");
+const PiIO = require("pi-io");
 const chalk = require("chalk");
 const sleep = require("system-sleep");
 
 const board = new five.Board({
-  io: new RaspiIO()
+  io: new PiIO()
 });
 
 // SETUP
@@ -46,6 +47,9 @@ const btnOrange = new five.Button("GPIO23");
 const btnGreen = new five.Button("GPIO24");
 const btnYellow = new five.Button("GPIO25");
 const piezo = new five.Piezo("GPIO16");
+let lcd = new five.LCD({
+  controller: "PCF8574T"
+});
 
 const speedOrange = 100;
 const speedGreen = 250;
@@ -78,6 +82,16 @@ const printDebug = (message, color = "yellow") => {
  */
 const printMessage = (message, color = "whiteBright") => {
   console.log(chalk[color](`${message}`));
+};
+
+/**
+ * Print LCD game message
+ * @param {*} message
+ */
+const printLCDMessage = (message, line = 0, clear = true) => {
+  if (clear) lcd.clear();
+  lcd.cursor(line, 0);
+  lcd.print(`${message}`);
 };
 
 /**
@@ -137,6 +151,9 @@ async function showGuideMessage() {
     );
     printMessage(`***********`);
 
+    printLCDMessage(`WHELCOME`, 0);
+    printLCDMessage(`Test your memory!`, 1, false);
+
     await playStart();
 
     ifFirstMatch = false;
@@ -151,6 +168,8 @@ function setGameSpeed() {
     printMessage(
       `\n-----------\nSelect the difficulty level of the game by pressing the button\nORANGE: ${speedOrange}ms, GREEN: ${speedGreen}ms, YELLOW: ${speedYellow}ms.\n-----------`
     );
+    printLCDMessage(`SELECT LEVEL`);
+    printLCDMessage(`Press one button`, 1, false); // TODO: Add more slection level detail
     ledBlue.on();
     btnOrange.once("press", function fn() {
       printDebug(`setGameSpeed - Pressed Orange: ${speedOrange} ms`, "red");
@@ -181,6 +200,8 @@ function userIsReady() {
     `\nAs soon as you feel ready, click any button and memorize the sequence.`,
     "blue"
   );
+  printLCDMessage(`READY TO GO`);
+  printLCDMessage(`Click any button to start`, 1, false);
   ledBlue.on();
   return new Promise((resolve, reject) => {
     btnOrange.once("press", function fn() {
@@ -228,6 +249,8 @@ function makeSequence() {
 
     ledBlue.on();
     printMessage("Repeat the sequence, if you haven't already forgotten it!");
+    printLCDMessage(`REPEAT THE SEQUENCE`);
+    printLCDMessage(`Do you remember it?`, 1, false);
     printDebug(`The new sequence is: ${sequence}`);
     resolve();
   });
@@ -239,6 +262,7 @@ function makeSequence() {
  */
 function validateCombination(button) {
   printMessage("Let's see if you remember well ...");
+  printLCDMessage(`VERIFY...`);
   printDebug(`validate step: ${sequence[currentIndex]} vs ${button}`);
   let error = false;
   switch (button) {
@@ -282,8 +306,12 @@ function validateCombination(button) {
     sequenceDone = true;
   } else if (!error) {
     printMessage("You remembered well");
+    printLCDMessage(`GREAT!`);
+    printLCDMessage(`You remembered well`, 1, false);
   } else {
     printMessage("You have not completed the sequence!");
+    printLCDMessage(`Oooh!`);
+    printLCDMessage(`Epic fail`, 1, false);
     sequenceDone = true;
   }
 
@@ -328,9 +356,13 @@ async function showResult() {
     printMessage(
       "\nAnd then they say that luck does not exist, you remembered the whole sequence!\n Do you want to test yourself again?"
     );
+    printLCDMessage(`EXCELLENT!`);
+    printLCDMessage(`Play again`, 1, false);
     await playSuccess();
   } else {
     printMessage("\nAhahhaa maybe it's better if you try again!");
+    printLCDMessage(`FAIL!`);
+    printLCDMessage(`Try again`, 1, false);
     await playError();
   }
 }
@@ -497,6 +529,7 @@ async function startGame() {
 const beforeExit = () => {
   ledsToggle();
   ledBlue.off();
+  lcd.off();
   printDebug("I am sorry that you go out :-(");
 };
 

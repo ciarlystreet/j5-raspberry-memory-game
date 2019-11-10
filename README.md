@@ -23,8 +23,11 @@ Components needed:
 - 2x Orange wires
 - 2x Green wires
 - 2x Yellow wires
-- 9x Black wires
-- 5x Red wires
+- 10x Black wires
+- 6x Red wires
+- 1x Pink wire
+- 1x Cyan wire
+- 1x LCD (with backpack LCM1602 IIC)
 - A lot of curiosity :-)
 
 ![J5 Raspberry Memory Game Schematic](j5-raspberry-memory-game.jpg)
